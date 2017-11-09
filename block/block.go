@@ -22,6 +22,7 @@ type Block struct {
 	Headers *BlockHeader
 }
 
+//NewBlock ...
 func NewBlock(d []byte, prevHash BlockHash) *Block {
 	b := &Block{
 		Headers: NewHeader(prevHash),
@@ -29,6 +30,11 @@ func NewBlock(d []byte, prevHash BlockHash) *Block {
 	}
 	b.HashMe()
 	return b
+}
+
+//NewGenisisBlock to start a chain
+func NewGenesisBlock() *Block {
+	return NewBlock([]byte("In the beginning..."), []byte{})
 }
 
 func NewHeader(prevHash BlockHash) *BlockHeader {
@@ -42,6 +48,10 @@ func NewHeader(prevHash BlockHash) *BlockHeader {
 //HashMe hashes a block once it has data
 func (b *Block) HashMe() {
 	b.Headers.Hash = getHash(*b)
+}
+
+func (b Block) GetHash() BlockHash {
+	return b.Headers.Hash
 }
 
 func getHash(b Block) BlockHash {
