@@ -19,7 +19,24 @@ type BlockHeader struct {
 //Block ...
 type Block struct {
 	Data    []byte
-	Headers BlockHeader
+	Headers *BlockHeader
+}
+
+func NewBlock(d []byte, prevHash BlockHash) *Block {
+	b := &Block{
+		Headers: NewHeader(prevHash),
+		Data:    d,
+	}
+	b.HashMe()
+	return b
+}
+
+func NewHeader(prevHash BlockHash) *BlockHeader {
+	h := &BlockHeader{
+		Ts:            time.Now(),
+		PrevBlockHash: prevHash,
+	}
+	return h
 }
 
 //HashMe hashes a block once it has data
