@@ -1,6 +1,7 @@
 package block
 
 import (
+	"encoding/json"
 	"time"
 
 	log "github.com/cihub/seelog"
@@ -58,4 +59,14 @@ func NewHeader(prevHash BlockHash) *BlockHeader {
 
 func (b Block) GetHash() BlockHash {
 	return b.Headers.Hash
+}
+
+func (b Block) Serialize() ([]byte, error) {
+	return json.Marshal(b)
+}
+
+func DeserializeBlock(d []byte) (b *Block, err error) {
+	b = &Block{}
+	err = json.Unmarshal(d, b)
+	return b, err
 }

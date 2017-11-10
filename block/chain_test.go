@@ -42,6 +42,9 @@ func TestChains(t *testing.T) {
 		So(c.blocks[2].Headers.PrevBlockHash, ShouldResemble, c.blocks[1].Headers.Hash)
 		So(c.blocks[1].Headers.PrevBlockHash, ShouldResemble, c.blocks[0].Headers.Hash)
 		So(c.blocks[0].Headers.PrevBlockHash, ShouldResemble, BlockHash{})
-
+		for _, block := range c.blocks {
+			proof := p.GetPOW(block)
+			So(proof.Validate(), ShouldBeTrue)
+		}
 	})
 }

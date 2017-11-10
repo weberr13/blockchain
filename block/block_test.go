@@ -22,4 +22,19 @@ func TestBlocks(t *testing.T) {
 		So(b.Headers.Hash, ShouldNotBeNil)
 		So(b.Headers.Hash, ShouldNotBeEmpty)
 	})
+
+	Convey("Serialization", t, func() {
+		d := []byte("hello world")
+		prev := BlockHash([]byte{})
+		p := NewSha256Pow(2)
+		b := NewBlock(p, d, prev)
+		So(string(b.Data), ShouldEqual, "hello world")
+		j, err := b.Serialize()
+		So(err, ShouldBeNil)
+		t.Log(string(j))
+		b2, err := DeserializeBlock(j)
+		So(err, ShouldBeNil)
+
+		So(b2, ShouldResemble, b)
+	})
 }
