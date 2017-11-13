@@ -14,6 +14,34 @@ type Chain struct {
 	db  *bolt.DB
 }
 
+type ChainIterator struct {
+	current Hash
+	db      *bolt.DB
+}
+
+func (c *Chain) Iterator() *ChainIterator {
+	return &ChainIterator{c.Tip, c.db}
+}
+
+func (i *ChainIterator) Next() (block *Block, err error) {
+	err = i.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		blockBytes := b.Get(i.current)
+		block, err = DeserializeBlock(blockBytes)
+
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	i.current = block.Headers.PrevBlockHash
+
+	return block, nil
+}
+
+//Close will shut down the db connection/etc
 func (c *Chain) Close() error {
 	return c.db.Close()
 }

@@ -11,14 +11,14 @@ type POWBuilder interface {
 	GetPOW(b *Block) *ProofOfWork
 }
 
-//BlockHash ...
-type BlockHash []byte
+//Hash ...
+type Hash []byte
 
 //BlockHeader ...
 type BlockHeader struct {
 	Ts            time.Time
-	PrevBlockHash BlockHash
-	Hash          BlockHash
+	PrevBlockHash Hash
+	Hash          Hash
 	Nonce         int64
 }
 
@@ -29,7 +29,7 @@ type Block struct {
 }
 
 //NewBlock ...
-func NewBlock(pow POWBuilder, d []byte, prevHash BlockHash) *Block {
+func NewBlock(pow POWBuilder, d []byte, prevHash Hash) *Block {
 	b := &Block{
 		Headers: NewHeader(prevHash),
 		Data:    d,
@@ -49,7 +49,7 @@ func NewGenesisBlock(pow POWBuilder) *Block {
 	return NewBlock(pow, []byte("In the beginning..."), []byte{})
 }
 
-func NewHeader(prevHash BlockHash) *BlockHeader {
+func NewHeader(prevHash Hash) *BlockHeader {
 	h := &BlockHeader{
 		Ts:            time.Now(),
 		PrevBlockHash: prevHash,
@@ -57,7 +57,7 @@ func NewHeader(prevHash BlockHash) *BlockHeader {
 	return h
 }
 
-func (b Block) GetHash() BlockHash {
+func (b Block) GetHash() Hash {
 	return b.Headers.Hash
 }
 

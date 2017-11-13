@@ -1,9 +1,9 @@
 package block
 
 import (
-	"testing"
-	"os"
 	"io/ioutil"
+	"os"
+	"testing"
 
 	log "github.com/cihub/seelog"
 	. "github.com/smartystreets/goconvey/convey"
@@ -17,15 +17,20 @@ func TestChains(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		defer os.Remove(tmpfile)
+		defer os.Remove(tmpfile.Name())
 		p := NewSha256Pow(2)
 
-		c := NewBlockChain(p, tmpfile)
+		c := NewBlockChain(p, tmpfile.Name())
 		So(c, ShouldNotBeNil)
 		defer c.Close()
 		c.AddBlock([]byte("hello world"))
-		So(len(c.blocks), ShouldEqual, 2)
-		So(c.blocks[1].Data, ShouldResemble, []byte("hello world"))
+		i := c.Iterator()
+		blocks := []*Block{}
+		for b, err := i.Next(); b != nil && err == nil; b, err = i.Next() {
+			blocks = append(blocks, b)
+		}
+		So(len(blocks), ShouldEqual, 2)
+		So(blocks[0].Data, ShouldResemble, []byte("hello world"))
 	})
 
 	Convey("Constructor", t, func() {
@@ -33,14 +38,18 @@ func TestChains(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		defer os.Remove(tmpfile)
+		defer os.Remove(tmpfile.Name())
 		p := NewSha256Pow(2)
 
-		c := NewBlockChain(p, tmpfile)
+		c := NewBlockChain(p, tmpfile.Name())
 		So(c, ShouldNotBeNil)
 		defer c.Close()
-		So(c.blocks, ShouldNotBeNil)
-		So(c.blocks, ShouldNotBeEmpty)
+		blocks := []*Block{}
+		i := c.Iterator()
+		for b, err := i.Next(); b != nil && err == nil; b, err = i.Next() {
+			blocks = append(blocks, b)
+		}
+		So(blocks, ShouldNotBeEmpty)
 	})
 
 	Convey("add some stuff", t, func() {
@@ -48,25 +57,29 @@ func TestChains(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		defer os.Remove(tmpfile)
+		defer os.Remove(tmpfile.Name())
 		p := NewSha256Pow(2)
 
-		c := NewBlockChain(p)
+		c := NewBlockChain(p, tmpfile.Name())
 		So(c, ShouldNotBeNil)
 		defer c.Close()
-		So(c.blocks, ShouldNotBeNil)
-		So(c.blocks, ShouldNotBeEmpty)
 		c.AddBlock([]byte("hello"))
 		c.AddBlock([]byte("World"))
-		So(len(c.blocks), ShouldEqual, 3)
-		So(c.blocks[1].Headers, ShouldNotBeNil)
-		So(c.blocks[2].Headers, ShouldNotBeNil)
-		So(c.blocks[1].Headers.Hash, ShouldNotBeNil)
-		So(c.blocks[2].Headers.Hash, ShouldNotBeNil)
-		So(c.blocks[2].Headers.PrevBlockHash, ShouldResemble, c.blocks[1].Headers.Hash)
-		So(c.blocks[1].Headers.PrevBlockHash, ShouldResemble, c.blocks[0].Headers.Hash)
-		So(c.blocks[0].Headers.PrevBlockHash, ShouldResemble, BlockHash{})
-		for _, block := range c.blocks {
+		blocks := []*Block{}
+		i := c.Iterator()
+		for b, err := i.Next(); b != nil && err == nil; b, err = i.Next() {
+			blocks = append(blocks, b)
+		}
+		So(blocks, ShouldNotBeEmpty)
+		So(len(blocks), ShouldEqual, 3)
+		So(blocks[1].Headers, ShouldNotBeNil)
+		So(blocks[0].Headers, ShouldNotBeNil)
+		So(blocks[1].Headers.Hash, ShouldNotBeNil)
+		So(blocks[0].Headers.Hash, ShouldNotBeNil)
+		So(blocks[0].Headers.PrevBlockHash, ShouldResemble, blocks[1].Headers.Hash)
+		So(blocks[1].Headers.PrevBlockHash, ShouldResemble, blocks[2].Headers.Hash)
+		So(blocks[2].Headers.PrevBlockHash, ShouldResemble, Hash{})
+		for _, block := range blocks {
 			proof := p.GetPOW(block)
 			So(proof.Validate(), ShouldBeTrue)
 		}

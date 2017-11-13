@@ -12,7 +12,7 @@ func TestBlocks(t *testing.T) {
 	defer log.Flush()
 	Convey("Construction", t, func() {
 		d := []byte("hello world")
-		prev := BlockHash([]byte{})
+		prev := Hash([]byte{})
 		p := NewSha256Pow(2)
 		b := NewBlock(p, d, prev)
 		So(b.Data, ShouldResemble, d)
@@ -25,7 +25,7 @@ func TestBlocks(t *testing.T) {
 
 	Convey("Serialization", t, func() {
 		d := []byte("hello world")
-		prev := BlockHash([]byte{})
+		prev := Hash([]byte{})
 		p := NewSha256Pow(2)
 		b := NewBlock(p, d, prev)
 		So(string(b.Data), ShouldEqual, "hello world")
