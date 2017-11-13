@@ -27,7 +27,6 @@ func main() {
 	if nil != err {
 		panic(err)
 	}
-	fmt.Println(opts.Filename)
 	p := block.NewSha256Pow(2)
 
 	c := block.NewBlockChain(p, opts.Filename)
@@ -71,7 +70,11 @@ func main() {
 			panic(fmt.Sprintf("addblock error: %v", err))
 		}
 	}
-	c.Close()
+
+	err = c.Close()
+	if err != nil {
+		panic(fmt.Sprintf("Could not close chain: %v", err))
+	}
 	trapSignal := make(chan os.Signal, 1)
 	signal.Notify(trapSignal, os.Interrupt, syscall.SIGTERM)
 hunt:
@@ -91,7 +94,6 @@ hunt:
 				continue check
 			}
 		}
-
 		c = block.NewBlockChain(p, opts.Filename)
 		oldMax, err := c.Iterator().Next()
 		if err != nil {
@@ -104,8 +106,9 @@ hunt:
 		err = json.Unmarshal(oldMax.Data, oneNum)
 		if oneNum.Num >= nextPrime {
 			knownPrimes = append(knownPrimes, oneNum.Num)
+			catchupIterator := c.Iterator()
 		catchup:
-			for oldMax, err := c.Iterator().Next(); oldMax != nil && err == nil && !oldMax.IsGenesis(); oldMax, err = c.Iterator().Next() {
+			for oldMax, err := catchupIterator.Next(); oldMax != nil && err == nil && !oldMax.IsGenesis(); oldMax, err = catchupIterator.Next() {
 				proof := p.GetPOW(oldMax)
 				if !proof.Validate() {
 					panic("Blockchain corrupt!")
@@ -122,7 +125,10 @@ hunt:
 			if err != nil {
 				panic(fmt.Sprintf("iterator error: %v", err))
 			}
-			c.Close()
+			err = c.Close()
+			if err != nil {
+				panic(fmt.Sprintf("Could not close chain: %v", err))
+			}
 			continue hunt
 		}
 		knownPrimes = append(knownPrimes, nextPrime)
@@ -135,7 +141,11 @@ hunt:
 		if err != nil {
 			panic(fmt.Sprintf("addblock error: %v", err))
 		}
-		c.Close()
+
+		err = c.Close()
+		if err != nil {
+			panic(fmt.Sprintf("Could not close chain: %v", err))
+		}
 		select {
 		case <-trapSignal:
 			break hunt
