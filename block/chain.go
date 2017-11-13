@@ -82,7 +82,7 @@ func (c *Chain) AddBlock(data []byte) (err error) {
 //NewBlockChain with valid genesis
 func NewBlockChain(pow POWBuilder, dbfile string) *Chain {
 	var tip []byte
-	db, err := bolt.Open(dbfile, 0600, nil) // leaving this open???
+	db, err := bolt.Open(dbfile, 0600, nil)
 	if err != nil {
 		log.Error("cannot create chain: ", err)
 		return nil

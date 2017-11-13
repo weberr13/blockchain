@@ -28,6 +28,10 @@ type Block struct {
 	Headers *BlockHeader
 }
 
+//IsGenesis block
+func (b Block) IsGenesis() bool {
+	return b.Headers.PrevBlockHash == nil 
+}
 //NewBlock ...
 func NewBlock(pow POWBuilder, d []byte, prevHash Hash) *Block {
 	b := &Block{
