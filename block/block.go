@@ -30,8 +30,9 @@ type Block struct {
 
 //IsGenesis block
 func (b Block) IsGenesis() bool {
-	return b.Headers.PrevBlockHash == nil 
+	return b.Headers.PrevBlockHash == nil || len(b.Headers.PrevBlockHash) == 0
 }
+
 //NewBlock ...
 func NewBlock(pow POWBuilder, d []byte, prevHash Hash) *Block {
 	b := &Block{

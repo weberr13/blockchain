@@ -36,17 +36,23 @@ func main() {
 
 	knownPrimes := []int64{}
 	fmt.Println("walking old data")
-	c.Walk(func(b *block.Block) error {
+	err = c.Walk(func(b *block.Block) error {
 		oneNum := &PrimeNum{}
 		err = json.Unmarshal(b.Data, oneNum)
 		if err != nil {
+			fmt.Println(b.Headers)
+			fmt.Printf(string(b.Data))
 			return err
 		}
 		knownPrimes = append([]int64{oneNum.Num}, knownPrimes...)
 		return nil
 	}, func(b *block.Block) bool {
+		// Want the whole thing
 		return false
 	})
+	if err != nil {
+		panic(fmt.Sprintf("Could not read data: ", err))
+	}
 	oneNum := &PrimeNum{}
 
 	if len(knownPrimes) <= 1 {
@@ -112,22 +118,17 @@ hunt:
 		err = json.Unmarshal(oldMax.Data, oneNum)
 		if oneNum.Num >= nextPrime {
 			knownPrimes = append(knownPrimes, oneNum.Num)
-			catchupIterator := c.Iterator()
-		catchup:
-			for oldMax, err := catchupIterator.Next(); oldMax != nil && err == nil && !oldMax.IsGenesis(); oldMax, err = catchupIterator.Next() {
-				proof := p.GetPOW(oldMax)
-				if !proof.Validate() {
-					panic("Blockchain corrupt!")
-				}
-				err := json.Unmarshal(oldMax.Data, oneNum)
+
+			err = c.Walk(func(b *block.Block) error {
+				err = json.Unmarshal(b.Data, oneNum)
 				if err != nil {
-					panic(fmt.Sprintf("json error:%v", err))
+					return err
 				}
-				if oneNum.Num < nextPrime {
-					break catchup
-				}
-				knownPrimes = append(knownPrimes, oneNum.Num)
-			}
+				knownPrimes = append([]int64{oneNum.Num}, knownPrimes...)
+				return nil
+			}, func(b *block.Block) bool {
+				return oneNum.Num < nextPrime
+			})
 			if err != nil {
 				panic(fmt.Sprintf("iterator error: %v", err))
 			}
