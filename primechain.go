@@ -117,14 +117,14 @@ hunt:
 		}
 		err = json.Unmarshal(oldMax.Data, oneNum)
 		if oneNum.Num >= nextPrime {
-			knownPrimes = append(knownPrimes, oneNum.Num)
+			newPrimes := []int64{oneNum.Num}
 
 			err = c.Walk(func(b *block.Block) error {
 				err = json.Unmarshal(b.Data, oneNum)
 				if err != nil {
 					return err
 				}
-				knownPrimes = append([]int64{oneNum.Num}, knownPrimes...)
+				newPrimes = append([]int64{oneNum.Num}, newPrimes...)
 				return nil
 			}, func(b *block.Block) bool {
 				return oneNum.Num < nextPrime
@@ -136,6 +136,7 @@ hunt:
 			if err != nil {
 				panic(fmt.Sprintf("Could not close chain: %v", err))
 			}
+			knownPrimes = append(knownPrimes, newPrimes...)
 			continue hunt
 		}
 		knownPrimes = append(knownPrimes, nextPrime)
@@ -159,6 +160,14 @@ hunt:
 		default:
 			break
 		}
+	}
+	old := int64(0)
+	for _, prime := range knownPrimes {
+		if old > prime {
+			fmt.Println(old, " > ", prime)
+			panic("Out of order, something is terribly wrong")
+		}
+		old = prime
 	}
 	fmt.Println("Here are the primes: ", knownPrimes)
 
