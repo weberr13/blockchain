@@ -42,7 +42,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		knownPrimes = append(knownPrimes, oneNum.Num)
+		knownPrimes = append([]int64{oneNum.Num}, knownPrimes...)
 		return nil
 	}, func(b *block.Block) bool {
 		return false
@@ -52,8 +52,10 @@ func main() {
 	if len(knownPrimes) <= 1 {
 		fmt.Println("seeding the sequence")
 
+		knownPrimes = append(knownPrimes, 2)
 		knownPrimes = append(knownPrimes, 3)
-		oneNum.Num = 3
+
+		oneNum.Num = 2
 		by, err := json.Marshal(oneNum)
 		if err != nil {
 			panic(fmt.Sprintf("json error:%v", err))
@@ -62,8 +64,7 @@ func main() {
 		if err != nil {
 			panic(fmt.Sprintf("addblock error: %v", err))
 		}
-		knownPrimes = append(knownPrimes, 2)
-		oneNum.Num = 2
+		oneNum.Num = 3
 		by, err = json.Marshal(oneNum)
 		if err != nil {
 			panic(fmt.Sprintf("json error:%v", err))
@@ -83,7 +84,7 @@ func main() {
 	trapSignal := make(chan os.Signal, 1)
 	signal.Notify(trapSignal, os.Interrupt, syscall.SIGTERM)
 hunt:
-	for nextPrime := knownPrimes[0] + 2; ; nextPrime += 2 {
+	for nextPrime := knownPrimes[len(knownPrimes)-1] + 2; ; nextPrime += 2 {
 	check:
 		for _, p := range knownPrimes {
 			if int(nextPrime)%int(p) == 0 {
