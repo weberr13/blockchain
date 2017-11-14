@@ -1,6 +1,8 @@
 package block
 
 import (
+	"fmt"
+
 	"github.com/boltdb/bolt"
 	log "github.com/cihub/seelog"
 )
@@ -119,4 +121,24 @@ func NewBlockChain(pow POWBuilder, dbfile string) *Chain {
 	}
 
 	return &Chain{Tip: tip, db: db, pow: pow}
+}
+
+//Walk the chain performing action and fininshing when done
+func (c Chain) Walk(action func(b *Block) error, done func(b *Block) bool) error {
+	i := c.Iterator()
+
+	for b, err := i.Next(); b != nil && err == nil && !done(b); b, err = i.Next() {
+		proof := c.pow.GetPOW(b)
+		if !proof.Validate() {
+			return fmt.Errorf("chain corrupt")
+		}
+		if b.IsGenesis() {
+			return nil
+		}
+		err = action(b)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

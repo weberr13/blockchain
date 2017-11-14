@@ -34,23 +34,26 @@ func main() {
 		panic("Couldn't build or open chain")
 	}
 
-	i := c.Iterator()
 	knownPrimes := []int64{}
-	oneNum := &PrimeNum{}
-	for b, err := i.Next(); b != nil && err == nil && !b.IsGenesis(); b, err = i.Next() {
-		proof := p.GetPOW(b)
-		if !proof.Validate() {
-			panic("Blockchain corrupt!")
-		}
+	fmt.Println("walking old data")
+	c.Walk(func(b *block.Block) error {
+		oneNum := &PrimeNum{}
 		err = json.Unmarshal(b.Data, oneNum)
 		if err != nil {
-			break
+			return err
 		}
 		knownPrimes = append(knownPrimes, oneNum.Num)
-	}
+		return nil
+	}, func(b *block.Block) bool {
+		return false
+	})
+	oneNum := &PrimeNum{}
+
 	if len(knownPrimes) <= 1 {
-		knownPrimes = append(knownPrimes, 2)
-		oneNum.Num = 2
+		fmt.Println("seeding the sequence")
+
+		knownPrimes = append(knownPrimes, 3)
+		oneNum.Num = 3
 		by, err := json.Marshal(oneNum)
 		if err != nil {
 			panic(fmt.Sprintf("json error:%v", err))
@@ -59,8 +62,8 @@ func main() {
 		if err != nil {
 			panic(fmt.Sprintf("addblock error: %v", err))
 		}
-		knownPrimes = append(knownPrimes, 3)
-		oneNum.Num = 3
+		knownPrimes = append(knownPrimes, 2)
+		oneNum.Num = 2
 		by, err = json.Marshal(oneNum)
 		if err != nil {
 			panic(fmt.Sprintf("json error:%v", err))
@@ -72,6 +75,8 @@ func main() {
 	}
 
 	err = c.Close()
+	fmt.Println("starting computation")
+
 	if err != nil {
 		panic(fmt.Sprintf("Could not close chain: %v", err))
 	}
